@@ -110,9 +110,9 @@ unsigned char serial_rx_byte;
 			else
 				bt1=0;
 		}
-		if (bt1==0)
-			PIN_LED1=LED_DESACIONADO;
-		else
+		if (bt1==1)
 			PIN_LED1=LED_ACIONADO;
+		else
+			PIN_LED1=LED_DESACIONADO;
 	}
 }

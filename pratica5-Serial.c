@@ -1,4 +1,5 @@
 #include <p18f87j10.h>
+#include "config_bits.h"
 
 
 //RBPU=0;

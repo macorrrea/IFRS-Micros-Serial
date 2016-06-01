@@ -80,6 +80,8 @@ int serial_setup(void)
 	TXSTA1bits.TX9=0;
 	TXSTA1bits.SYNC=0;
 	TXSTA1bits.BRGH=1;
+	TXSTA1bits.SENDB=0;
+	TXSTA1bits.TXEN=1;
 	RCSTA1bits.RX9=0;
 	BAUDCON1bits.WUE=0;
 	BAUDCON1bits.ABDEN=0;
@@ -124,7 +126,10 @@ void main (void)
 	// TODO: USER CODE!!
     while(1)
     {
+		if (serial_rx_byte!=0)
 		{
+			TXREG1=serial_rx_byte;
+			serial_rx_byte=0;
 		}
 		if (bt1==1)
 			PIN_LED1=LED_ACIONADO;

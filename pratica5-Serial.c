@@ -24,8 +24,11 @@
 #define PIN_BOT_DIMINUI_ACIONADO		0
 #define PIN_BOT_DIMINUI_DESACIONADO		1
 
+unsigned char serial_rx_byte;
+
 //protótipos de funções
 void io_int (void);
+void serial_int (void);
 //void Config_Duty_Cycle (char x);
 
 #pragma code high_vector=0x8
@@ -38,6 +41,7 @@ void high_int (void)
 #pragma code low_vector=0x18
 void low_int (void)
 {
+	_asm goto serial_int _endasm
 }
 #pragma code
 
@@ -52,6 +56,20 @@ void io_int (void)
 		bt1=1;
 	// Operador ternário
  // bt1 = (bt1 !=0 ? 0 : 1);
+}
+
+#pragma interrupt serial_int
+void serial_int (void)
+{
+	if (PIR1bits.RC1IF==1)
+		{
+			serial_rx_byte=RCREG1;
+			PIR1bits.RC1IF=0;
+			if (bt1==0)
+				bt1=1;
+			else
+				bt1=0;
+		}
 }
 
 int serial_setup(void)
@@ -70,26 +88,29 @@ int serial_setup(void)
 	SPBRG1=64;
 	RCSTA1bits.CREN=1;
 	RCSTA1bits.SPEN=1;
-
-	PIE1bits.RC1IE=0; // Desliga a interrupcao
+	
+	PIR1bits.RC1IF=0;
+	IPR1bits.RC1IP=0;
+	PIE1bits.RC1IE=1; // Desliga a interrupcao
 	
 }
 
 
 void main (void)
 {
-unsigned char serial_rx_byte;
+
 
 	//I/O's
 	PORTB = 0x30;
 	TRISB = 0x31;	
 
-#if 0
+#if 1
 	
 	INTCONbits.GIE=0;
+	RCONbits.IPEN=1;
 	INTCONbits.PEIE=1;
-	INTCONbits.INT0IE=1;
-	INTCONbits.INT0IF=0;
+	//INTCONbits.INT0IE=1;
+	//INTCONbits.INT0IF=0;
 
 	/* Inicializa enquanto as interrupções estão desabilitadas.  */
 	bt1=0;
@@ -103,13 +124,7 @@ unsigned char serial_rx_byte;
 	// TODO: USER CODE!!
     while(1)
     {
-		if (PIR1bits.RC1IF==1)
 		{
-			serial_rx_byte=RCREG1;
-			if (bt1==0)
-				bt1=1;
-			else
-				bt1=0;
 		}
 		if (bt1==1)
 			PIN_LED1=LED_ACIONADO;

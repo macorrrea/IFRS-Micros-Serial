@@ -24,7 +24,8 @@
 #define PIN_BOT_DIMINUI_ACIONADO		0
 #define PIN_BOT_DIMINUI_DESACIONADO		1
 
-unsigned char serial_rx_byte;
+unsigned char serial_rx_bytes[30], rxcont, rxok;
+
 
 //protótipos de funções
 void io_int (void);
@@ -61,15 +62,27 @@ void io_int (void)
 #pragma interrupt serial_int
 void serial_int (void)
 {
+	char ch;
 	if (PIR1bits.RC1IF==1)
+	{
+		ch=RCREG1;
+		PIR1bits.RC1IF=0;
+		if(ch=='\n' || ch=='\r')
 		{
-			serial_rx_byte=RCREG1;
-			PIR1bits.RC1IF=0;
-			if (bt1==0)
-				bt1=1;
-			else
-				bt1=0;
+			rxok=1;
+			return;
 		}
+		
+		serial_rx_bytes[rxcont]=ch;
+		rxcont++;
+		if (rxcont>=sizeof(serial_rx_bytes))
+			rxcont=0;
+		
+		if (bt1==0)
+			bt1=1;
+		else
+			bt1=0;
+	}
 }
 
 int serial_setup(void)
@@ -116,6 +129,8 @@ void main (void)
 
 	/* Inicializa enquanto as interrupções estão desabilitadas.  */
 	bt1=0;
+	rxcont=0;
+	rxok=0;
 	
 	INTCONbits.GIE=1;
 	
@@ -126,10 +141,10 @@ void main (void)
 	// TODO: USER CODE!!
     while(1)
     {
-		if (serial_rx_byte!=0)
+		if (rxok!=0)
 		{
-			TXREG1=serial_rx_byte;
-			serial_rx_byte=0;
+			rxok=0;
+
 		}
 		if (bt1==1)
 			PIN_LED1=LED_ACIONADO;
